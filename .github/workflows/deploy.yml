@@ -1,0 +1,30 @@
+name: Deploy to EC2
+
+jobs:
+  deploy:
+    name: Build and Deploy NestJS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: .
+          target: '~/stat-app'
+
+      - name: SSH into EC2 and restart app
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd ~/stat-app
+            cp ~/.env ~/stat-app
+            sh prod.sh
