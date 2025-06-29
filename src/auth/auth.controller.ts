@@ -46,7 +46,7 @@ export class AuthController {
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: 'none',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
     });
@@ -58,7 +58,12 @@ export class AuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    response.cookie('refreshToken', '');
+    response.cookie('refreshToken', '', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
+    });
   }
 
   @Post('refresh')
@@ -76,7 +81,7 @@ export class AuthController {
 
     response.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: 'none',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
     });
