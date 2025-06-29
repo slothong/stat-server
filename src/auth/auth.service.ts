@@ -1,22 +1,46 @@
-import { Injectable, UseGuards, Request } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AuthGuard } from '@nestjs/passport';
 import { User } from '@/users/user.entity';
-import { AuthRequest } from './auth-request';
+import { UsersService } from '@/users/users.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
+  ) {}
 
   login(user: User) {
     const payload = { username: user.username, sub: user.id };
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: '15m',
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: '7d',
+    });
     return {
-      access_token: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
     };
   }
 
-  @UseGuards(AuthGuard('jwt'))
-  getProfile(@Request() req: AuthRequest) {
-    return req.user;
+  async refresh(refreshToken: string) {
+    const payload = await this.jwtService.verifyAsync(refreshToken);
+
+    const user = await this.usersService.findByUsername(payload.username);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    const newPayload = { username: user.username, sub: user.id };
+
+    const newAccessToken = this.jwtService.sign(newPayload, {
+      expiresIn: '15m',
+    });
+    const newRefreshToken = this.jwtService.sign(newPayload, {
+      expiresIn: '7d',
+    });
+
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   }
 }

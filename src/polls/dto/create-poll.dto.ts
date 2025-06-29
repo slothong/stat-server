@@ -5,6 +5,9 @@ export class CreatePollDto {
   @IsNotEmpty()
   question: string;
 
+  @IsString()
+  description: string;
+
   @IsArray()
   @ArrayMinSize(2)
   @IsString({ each: true })
