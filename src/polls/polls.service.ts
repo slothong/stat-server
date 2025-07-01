@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Poll } from './poll.entity';
@@ -18,7 +22,7 @@ export class PollsService {
     return this.pollRepository.find({ relations: ['options'] });
   }
 
-  findOne(id: number): Promise<Poll | null> {
+  findOne(id: string): Promise<Poll | null> {
     return this.pollRepository.findOne({
       where: { id },
       relations: ['options'],
@@ -44,6 +48,29 @@ export class PollsService {
     );
 
     poll.options = options;
+    return poll;
+  }
+
+  async vote(pollId: string, optionId: string) {
+    const poll = await this.pollRepository.findOne({
+      where: { id: pollId },
+      relations: ['options'],
+    });
+    if (!poll) {
+      throw new NotFoundException(`Poll with ${pollId} not found`);
+    }
+
+    const option = poll.options.find((option) => option.id === optionId);
+    if (!option) {
+      throw new BadRequestException(
+        `Option with ${optionId} not found in poll ${pollId}`,
+      );
+    }
+
+    option.votes += 1;
+
+    await this.pollRepository.save(poll);
+
     return poll;
   }
 }

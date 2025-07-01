@@ -3,8 +3,8 @@ import { Poll } from '@/polls/poll.entity';
 
 @Entity({ name: 'options' })
 export class Option {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @ManyToOne(() => Poll, (poll) => poll.options, { onDelete: 'CASCADE' })
   poll: Poll;

@@ -9,8 +9,8 @@ import { Option } from '@/options/option.entity';
 
 @Entity({ name: 'polls' })
 export class Poll {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column('text')
   question: string;

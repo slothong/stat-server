@@ -14,7 +14,7 @@ export class PollsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number): Promise<Poll | null> {
+  findOne(@Param('id') id: string): Promise<Poll | null> {
     return this.pollsService.findOne(id);
   }
 
@@ -22,5 +22,13 @@ export class PollsController {
   @Post()
   create(@Body() createPollDto: CreatePollDto): Promise<Poll> {
     return this.pollsService.create(createPollDto);
+  }
+
+  @Post(':id/votes')
+  vote(
+    @Body() voteDto: { optionId: string },
+    @Param('id') pollId: string,
+  ): Promise<Poll> {
+    return this.pollsService.vote(pollId, voteDto.optionId);
   }
 }
