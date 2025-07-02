@@ -4,9 +4,11 @@ import { Poll } from './poll.entity';
 import { PollsService } from './polls.service';
 import { PollsController } from './polls.controller';
 import { Option } from '@/options/option.entity';
+import { VotesModule } from '@/votes/votes.module';
+import { Vote } from '@/votes/vote.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Poll, Option])],
+  imports: [TypeOrmModule.forFeature([Poll, Option, Vote]), VotesModule],
   providers: [PollsService],
   controllers: [PollsController],
   exports: [PollsService],

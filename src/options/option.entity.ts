@@ -9,9 +9,6 @@ export class Option {
   @ManyToOne(() => Poll, (poll) => poll.options, { onDelete: 'CASCADE' })
   poll: Poll;
 
-  @Column({ name: 'option_text', type: 'text' })
+  @Column({ type: 'text' })
   optionText: string;
-
-  @Column({ default: 0 })
-  votes: number;
 }

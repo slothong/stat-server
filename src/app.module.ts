@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PollsModule } from './polls/polls.module';
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { PollsModule } from './polls/polls.module';
         synchronize: true,
         retryAttempts: 5,
         retryDelay: 3000,
+        namingStrategy: new SnakeNamingStrategy(),
       }),
     }),
     AuthModule,

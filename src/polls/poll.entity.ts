@@ -15,9 +15,12 @@ export class Poll {
   @Column('text')
   question: string;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn()
   createdAt: Date;
 
   @OneToMany(() => Option, (option) => option.poll)
   options: Option[];
+
+  @Column('int', { default: 1 })
+  maxSelectable: number; // 예: 1이면 단일 선택, 3이면 최대 3개 선택 가능
 }

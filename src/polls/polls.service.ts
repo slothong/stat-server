@@ -1,13 +1,11 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Poll } from './poll.entity';
 import { CreatePollDto } from './dto/create-poll.dto';
 import { Option } from '@/options/option.entity';
+import { Vote } from '@/votes/vote.entity';
+import { PollResponseDto } from './dto/poll-response.dto';
 
 @Injectable()
 export class PollsService {
@@ -16,17 +14,53 @@ export class PollsService {
     private readonly pollRepository: Repository<Poll>,
     @InjectRepository(Option)
     private readonly optionRepository: Repository<Option>,
+    @InjectRepository(Vote)
+    private readonly voteRepository: Repository<Vote>,
   ) {}
 
   findAll(): Promise<Poll[]> {
     return this.pollRepository.find({ relations: ['options'] });
   }
 
-  findOne(id: string): Promise<Poll | null> {
-    return this.pollRepository.findOne({
-      where: { id },
+  async findOne(pollId: string, userId?: string): Promise<PollResponseDto> {
+    const userVotes = await this.voteRepository.find({
+      where: {
+        poll: { id: pollId },
+        user: { id: userId },
+      },
+      relations: ['option'],
+    });
+    const voteCounts: { optionId: string; count: string }[] =
+      await this.voteRepository
+        .createQueryBuilder('vote')
+        .select('vote.option_id', 'optionId')
+        .addSelect('COUNT(*)', 'count')
+        .where('vote.poll_id = :pollId', { pollId })
+        .groupBy('vote.option_id')
+        .getRawMany();
+    const votedOptionIds = new Set(userVotes.map((v) => v.option.id));
+    const countMap: Record<string, number> = Object.fromEntries(
+      voteCounts.map((v) => [v.optionId, Number(v.count)]),
+    );
+    const poll = await this.pollRepository.findOne({
+      where: { id: pollId },
       relations: ['options'],
     });
+    if (!poll) {
+      throw new NotFoundException();
+    }
+    return {
+      id: poll.id,
+      question: poll.question,
+      options: poll.options.map((opt) => ({
+        id: opt.id,
+        optionText: opt.optionText,
+        votes: countMap[opt.id] ?? 0,
+        votedByMe: votedOptionIds.has(opt.id),
+      })),
+      hasVoted: votedOptionIds.size > 0,
+      createdAt: poll.createdAt,
+    };
   }
 
   async create(data: CreatePollDto): Promise<Poll> {
@@ -48,29 +82,6 @@ export class PollsService {
     );
 
     poll.options = options;
-    return poll;
-  }
-
-  async vote(pollId: string, optionId: string) {
-    const poll = await this.pollRepository.findOne({
-      where: { id: pollId },
-      relations: ['options'],
-    });
-    if (!poll) {
-      throw new NotFoundException(`Poll with ${pollId} not found`);
-    }
-
-    const option = poll.options.find((option) => option.id === optionId);
-    if (!option) {
-      throw new BadRequestException(
-        `Option with ${optionId} not found in poll ${pollId}`,
-      );
-    }
-
-    option.votes += 1;
-
-    await this.pollRepository.save(poll);
-
     return poll;
   }
 }
