@@ -5,7 +5,6 @@ import {
   Body,
   Param,
   UseGuards,
-  NotFoundException,
   Request,
   UnauthorizedException,
   BadRequestException,
@@ -18,6 +17,7 @@ import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { VoteDto } from './dto/vote.dto';
 import { AuthRequest } from '@/auth/auth-request';
 import { VotesService } from '@/votes/votes.service';
+import { OptionalJwtAuthGuard } from '@/auth/optional-auth-guard';
 
 @Controller('polls')
 export class PollsController {
@@ -27,27 +27,17 @@ export class PollsController {
   ) {}
 
   @Get()
-  async findAll(): Promise<PollResponseDto[]> {
-    const polls = await this.pollsService.findAll();
-    return polls.map((poll) => ({ ...poll, hasVoted: false }));
+  async findAll(@Request() req: AuthRequest): Promise<PollResponseDto[]> {
+    return this.pollsService.findAll(req.user?.userId);
   }
 
   @Get(':id')
+  @UseGuards(OptionalJwtAuthGuard)
   async findOne(
     @Param('id') pollId: string,
     @Request() req: AuthRequest,
   ): Promise<PollResponseDto> {
-    const poll = await this.pollsService.findOne(pollId);
-    if (poll == null) {
-      throw new NotFoundException(`Poll with id ${pollId} not found`);
-    }
-    if (req.user) {
-      return {
-        ...poll,
-        hasVoted: await this.votesService.hasVoted(req.user.id, pollId),
-      };
-    }
-    return poll;
+    return this.pollsService.findOne(pollId, req.user?.userId);
   }
 
   @ApiBody({ type: [CreatePollDto] })
@@ -74,17 +64,14 @@ export class PollsController {
       throw new UnauthorizedException();
     }
 
-    const votes = await this.votesService.findByPoll(pollId, user.id);
-    console.log(votes);
-
-    const hasVoted = await this.votesService.hasVoted(user.id, pollId);
+    const hasVoted = await this.votesService.hasVoted(user.userId, pollId);
     if (hasVoted) {
       throw new BadRequestException('Already voted');
     }
     const poll = await this.votesService.vote(
       pollId,
       voteDto.optionIds,
-      user.id,
+      user.userId,
     );
     return {
       ...poll,

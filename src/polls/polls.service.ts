@@ -6,6 +6,8 @@ import { CreatePollDto } from './dto/create-poll.dto';
 import { Option } from '@/options/option.entity';
 import { Vote } from '@/votes/vote.entity';
 import { PollResponseDto } from './dto/poll-response.dto';
+import { VotesService } from '@/votes/votes.service';
+import { use } from 'passport';
 
 @Injectable()
 export class PollsService {
@@ -16,10 +18,19 @@ export class PollsService {
     private readonly optionRepository: Repository<Option>,
     @InjectRepository(Vote)
     private readonly voteRepository: Repository<Vote>,
+    private readonly votesService: VotesService,
   ) {}
 
-  findAll(): Promise<Poll[]> {
-    return this.pollRepository.find({ relations: ['options'] });
+  async findAll(userId?: string): Promise<Poll[]> {
+    const polls = await this.pollRepository.find({ relations: ['options'] });
+    if (userId == null) return polls;
+
+    return await Promise.all(
+      polls.map(async (poll) => {
+        const hasVoted = await this.votesService.hasVoted(userId, poll.id);
+        return { ...poll, hasVoted };
+      }),
+    );
   }
 
   async findOne(pollId: string, userId?: string): Promise<PollResponseDto> {
@@ -58,7 +69,10 @@ export class PollsService {
         votes: countMap[opt.id] ?? 0,
         votedByMe: votedOptionIds.has(opt.id),
       })),
-      hasVoted: votedOptionIds.size > 0,
+      hasVoted:
+        userId == null
+          ? false
+          : await this.votesService.hasVoted(userId, pollId),
       createdAt: poll.createdAt,
     };
   }
