@@ -38,7 +38,7 @@ export class PollsService {
         return {
           ...poll,
           hasVoted,
-          createdBy: {
+          createdBy: poll.createdBy && {
             id: poll.createdBy.id,
             username: poll.createdBy.username,
             createdAt: poll.createdBy.createdAt,
