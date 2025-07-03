@@ -4,8 +4,10 @@ import {
   Column,
   CreateDateColumn,
   OneToMany,
+  ManyToOne,
 } from 'typeorm';
 import { Option } from '@/options/option.entity';
+import { User } from '@/users/user.entity';
 
 @Entity({ name: 'polls' })
 export class Poll {
@@ -17,6 +19,9 @@ export class Poll {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @ManyToOne(() => User, { eager: true })
+  createdBy: User;
 
   @OneToMany(() => Option, (option) => option.poll)
   options: Option[];

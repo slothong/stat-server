@@ -31,6 +31,7 @@ export class PollsController {
     return this.pollsService.findAll(req.user?.userId);
   }
 
+  @ApiResponse({ status: 200, type: PollResponseDto })
   @Get(':id')
   @UseGuards(OptionalJwtAuthGuard)
   async findOne(
@@ -44,8 +45,12 @@ export class PollsController {
   @ApiResponse({ status: 201, type: PollResponseDto })
   @UseGuards(AuthGuard('jwt'))
   @Post()
-  async create(@Body() createPollDto: CreatePollDto): Promise<PollResponseDto> {
-    const poll = await this.pollsService.create(createPollDto);
+  async create(
+    @Body() createPollDto: CreatePollDto,
+    @Request() req: AuthRequest,
+  ): Promise<PollResponseDto> {
+    if (!req.user) throw new UnauthorizedException();
+    const poll = await this.pollsService.create(createPollDto, req.user.userId);
     return { ...poll, hasVoted: false };
   }
 

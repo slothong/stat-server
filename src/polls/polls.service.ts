@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Poll } from './poll.entity';
@@ -7,7 +11,7 @@ import { Option } from '@/options/option.entity';
 import { Vote } from '@/votes/vote.entity';
 import { PollResponseDto } from './dto/poll-response.dto';
 import { VotesService } from '@/votes/votes.service';
-import { use } from 'passport';
+import { User } from '@/users/user.entity';
 
 @Injectable()
 export class PollsService {
@@ -18,17 +22,28 @@ export class PollsService {
     private readonly optionRepository: Repository<Option>,
     @InjectRepository(Vote)
     private readonly voteRepository: Repository<Vote>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+
     private readonly votesService: VotesService,
   ) {}
 
-  async findAll(userId?: string): Promise<Poll[]> {
+  async findAll(userId?: string): Promise<PollResponseDto[]> {
     const polls = await this.pollRepository.find({ relations: ['options'] });
     if (userId == null) return polls;
 
     return await Promise.all(
       polls.map(async (poll) => {
         const hasVoted = await this.votesService.hasVoted(userId, poll.id);
-        return { ...poll, hasVoted };
+        return {
+          ...poll,
+          hasVoted,
+          createdBy: {
+            id: poll.createdBy.id,
+            username: poll.createdBy.username,
+            createdAt: poll.createdBy.createdAt,
+          },
+        };
       }),
     );
   }
@@ -74,13 +89,26 @@ export class PollsService {
           ? false
           : await this.votesService.hasVoted(userId, pollId),
       createdAt: poll.createdAt,
+      createdBy: {
+        id: poll.createdBy.id,
+        username: poll.createdBy.username,
+        createdAt: poll.createdBy.createdAt,
+      },
     };
   }
 
-  async create(data: CreatePollDto): Promise<Poll> {
+  async create(data: CreatePollDto, userId: string): Promise<PollResponseDto> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
     const poll = await this.pollRepository.save(
       this.pollRepository.create({
         question: data.question,
+        createdBy: user,
       }),
     );
 
@@ -96,6 +124,13 @@ export class PollsService {
     );
 
     poll.options = options;
-    return poll;
+    return {
+      ...poll,
+      createdBy: {
+        id: user.id,
+        username: user.username,
+        createdAt: user.createdAt,
+      },
+    };
   }
 }

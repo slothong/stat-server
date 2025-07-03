@@ -8,8 +8,5 @@ export class UserResponseDto {
   username: string;
 
   @ApiProperty()
-  password: string;
-
-  @ApiProperty()
   createdAt: Date;
 }

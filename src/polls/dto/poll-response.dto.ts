@@ -1,4 +1,5 @@
 import { OptionResponseDto } from '@/options/option-response.dto';
+import { UserResponseDto } from '@/users/user-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PollResponseDto {
@@ -10,6 +11,9 @@ export class PollResponseDto {
 
   @ApiProperty()
   createdAt: Date;
+
+  @ApiProperty()
+  createdBy: UserResponseDto;
 
   @ApiProperty()
   options: OptionResponseDto[];
