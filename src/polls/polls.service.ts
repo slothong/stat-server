@@ -89,7 +89,7 @@ export class PollsService {
           ? false
           : await this.votesService.hasVoted(userId, pollId),
       createdAt: poll.createdAt,
-      createdBy: {
+      createdBy: poll.createdBy && {
         id: poll.createdBy.id,
         username: poll.createdBy.username,
         createdAt: poll.createdBy.createdAt,
