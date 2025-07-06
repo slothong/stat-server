@@ -18,6 +18,7 @@ import { VoteDto } from './dto/vote.dto';
 import { AuthRequest } from '@/auth/auth-request';
 import { VotesService } from '@/votes/votes.service';
 import { OptionalJwtAuthGuard } from '@/auth/optional-auth-guard';
+import { PollSummaryDto } from './dto/poll-summary.dto';
 
 @Controller('polls')
 export class PollsController {
@@ -26,9 +27,12 @@ export class PollsController {
     private readonly votesService: VotesService,
   ) {}
 
+  @ApiResponse({ status: 200, type: [PollSummaryDto] })
   @Get()
-  async findAll(@Request() req: AuthRequest): Promise<PollResponseDto[]> {
-    return this.pollsService.findAll(req.user?.userId);
+  async findAll(@Request() req: AuthRequest): Promise<PollSummaryDto[]> {
+    return (await this.pollsService.findAll(req.user?.userId)).sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    );
   }
 
   @ApiResponse({ status: 200, type: PollResponseDto })
@@ -38,10 +42,17 @@ export class PollsController {
     @Param('id') pollId: string,
     @Request() req: AuthRequest,
   ): Promise<PollResponseDto> {
-    return this.pollsService.findOne(pollId, req.user?.userId);
+    const poll = await this.pollsService.findOne(pollId);
+    if (req.user) {
+      return {
+        ...poll,
+        hasVoted: await this.votesService.hasVoted(req.user.userId, poll.id),
+      };
+    }
+    return poll;
   }
 
-  @ApiBody({ type: [CreatePollDto] })
+  @ApiBody({ type: CreatePollDto })
   @ApiResponse({ status: 201, type: PollResponseDto })
   @UseGuards(AuthGuard('jwt'))
   @Post()

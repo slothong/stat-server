@@ -11,6 +11,8 @@ import {
 import { AuthService } from './auth.service';
 import { UsersService } from '@/users/users.service';
 import { Request, Response } from 'express';
+import { Gender } from '@/users/user.entity';
+import { RegisterDto } from './register-dto';
 
 @Controller('auth')
 export class AuthController {
@@ -20,16 +22,24 @@ export class AuthController {
   ) {}
 
   @Post('register')
-  async register(
-    @Body('username') username: string,
-    @Body('password') password: string,
-  ) {
+  async register(@Body() dto: RegisterDto) {
+    const { username, password, birth, gender } = dto;
     const existing = await this.usersService.findByUsername(username);
     if (existing) {
       throw new BadRequestException('Username already exists');
     }
-    const user = await this.usersService.create(username, password);
-    return { id: user.id, username: user.username };
+    const user = await this.usersService.create(
+      username,
+      password,
+      new Date(birth),
+      gender,
+    );
+    return {
+      id: user.id,
+      username: user.username,
+      birth: user.birth,
+      gender: user.gender,
+    };
   }
 
   @Post('login')

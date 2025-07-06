@@ -1,10 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
 } from 'typeorm';
+
+export type Gender = 'male' | 'female' | 'other';
 
 @Entity({ name: 'users' })
 export class User {
@@ -16,6 +17,12 @@ export class User {
 
   @Column({ length: 255 })
   password: string;
+
+  @Column()
+  birth: Date;
+
+  @Column({ type: 'enum', enum: ['male', 'female', 'other'], default: 'other' })
+  gender: Gender;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Gender } from './user.entity';
 
 export class UserResponseDto {
   @ApiProperty()
@@ -9,4 +10,10 @@ export class UserResponseDto {
 
   @ApiProperty()
   createdAt: Date;
+
+  @ApiProperty()
+  birth: Date;
+
+  @ApiProperty()
+  gender: Gender;
 }

@@ -48,26 +48,7 @@ export class PollsService {
     );
   }
 
-  async findOne(pollId: string, userId?: string): Promise<PollResponseDto> {
-    const userVotes = await this.voteRepository.find({
-      where: {
-        poll: { id: pollId },
-        user: { id: userId },
-      },
-      relations: ['option'],
-    });
-    const voteCounts: { optionId: string; count: string }[] =
-      await this.voteRepository
-        .createQueryBuilder('vote')
-        .select('vote.option_id', 'optionId')
-        .addSelect('COUNT(*)', 'count')
-        .where('vote.poll_id = :pollId', { pollId })
-        .groupBy('vote.option_id')
-        .getRawMany();
-    const votedOptionIds = new Set(userVotes.map((v) => v.option.id));
-    const countMap: Record<string, number> = Object.fromEntries(
-      voteCounts.map((v) => [v.optionId, Number(v.count)]),
-    );
+  async findOne(pollId: string): Promise<Poll> {
     const poll = await this.pollRepository.findOne({
       where: { id: pollId },
       relations: ['options'],
@@ -75,29 +56,10 @@ export class PollsService {
     if (!poll) {
       throw new NotFoundException();
     }
-    return {
-      id: poll.id,
-      question: poll.question,
-      options: poll.options.map((opt) => ({
-        id: opt.id,
-        optionText: opt.optionText,
-        votes: countMap[opt.id] ?? 0,
-        votedByMe: votedOptionIds.has(opt.id),
-      })),
-      hasVoted:
-        userId == null
-          ? false
-          : await this.votesService.hasVoted(userId, pollId),
-      createdAt: poll.createdAt,
-      createdBy: poll.createdBy && {
-        id: poll.createdBy.id,
-        username: poll.createdBy.username,
-        createdAt: poll.createdBy.createdAt,
-      },
-    };
+    return poll;
   }
 
-  async create(data: CreatePollDto, userId: string): Promise<PollResponseDto> {
+  async create(data: CreatePollDto, userId: string): Promise<Poll> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });
@@ -108,6 +70,7 @@ export class PollsService {
     const poll = await this.pollRepository.save(
       this.pollRepository.create({
         question: data.question,
+        description: data.description,
         createdBy: user,
       }),
     );
@@ -124,13 +87,6 @@ export class PollsService {
     );
 
     poll.options = options;
-    return {
-      ...poll,
-      createdBy: {
-        id: user.id,
-        username: user.username,
-        createdAt: user.createdAt,
-      },
-    };
+    return poll;
   }
 }

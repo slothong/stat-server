@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class OptionResponseDto {
+export class PollCreatedByDto {
   @ApiProperty()
   id: string;
   @ApiProperty()
-  optionText: string;
+  username: string;
 }

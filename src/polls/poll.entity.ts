@@ -17,6 +17,9 @@ export class Poll {
   @Column('text')
   question: string;
 
+  @Column('text')
+  description: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
