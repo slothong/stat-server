@@ -8,8 +8,9 @@ import {
 } from 'typeorm';
 import { Option } from '@/options/option.entity';
 import { User } from '@/users/user.entity';
+import { Comment } from '@/comments/comment.entity';
 
-@Entity({ name: 'polls' })
+@Entity('polls')
 export class Poll {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -31,4 +32,7 @@ export class Poll {
 
   @Column('int', { default: 1 })
   maxSelectable: number; // 예: 1이면 단일 선택, 3이면 최대 3개 선택 가능
+
+  @OneToMany(() => Comment, (comment) => comment.poll)
+  comments: Comment[];
 }

@@ -7,9 +7,15 @@ import { Option } from '@/options/option.entity';
 import { VotesModule } from '@/votes/votes.module';
 import { Vote } from '@/votes/vote.entity';
 import { User } from '@/users/user.entity';
+import { Comment } from '@/comments/comment.entity';
+import { CommentsModule } from '@/comments/comments.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Poll, Option, Vote, User]), VotesModule],
+  imports: [
+    TypeOrmModule.forFeature([Poll, Option, Vote, User, Comment]),
+    VotesModule,
+    CommentsModule,
+  ],
   providers: [PollsService],
   controllers: [PollsController],
   exports: [PollsService],

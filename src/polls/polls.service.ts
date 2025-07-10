@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -12,6 +13,7 @@ import { Vote } from '@/votes/vote.entity';
 import { PollResponseDto } from './dto/poll-response.dto';
 import { VotesService } from '@/votes/votes.service';
 import { User } from '@/users/user.entity';
+import { PollResultDto } from './dto/poll-result-dto';
 
 @Injectable()
 export class PollsService {
@@ -88,5 +90,37 @@ export class PollsService {
 
     poll.options = options;
     return poll;
+  }
+
+  async getResult(pollId: string, userId: string): Promise<PollResultDto> {
+    if (!(await this.votesService.hasVoted(userId, pollId))) {
+      throw new BadRequestException('Not voted poll');
+    }
+    const poll = await this.pollRepository.findOne({
+      where: { id: pollId },
+      relations: ['options'],
+    });
+    if (!poll) throw new NotFoundException(`Poll not found: ${pollId}`);
+    const votes = await this.voteRepository.find({
+      where: {
+        poll: {
+          id: pollId,
+        },
+      },
+      relations: ['option', 'user'],
+    });
+    return {
+      pollId,
+      question: poll.question,
+      description: poll.description,
+      options: poll.options.map((option) => ({
+        id: option.id,
+        optionText: option.optionText,
+        voteCount: votes.filter((vote) => vote.option.id === option.id).length,
+        votedByMe: !!votes.find(
+          (vote) => vote.option.id === option.id && vote.user.id === userId,
+        ),
+      })),
+    };
   }
 }

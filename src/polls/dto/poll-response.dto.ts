@@ -10,6 +10,9 @@ export class PollResponseDto {
   question: string;
 
   @ApiProperty()
+  description: string;
+
+  @ApiProperty()
   createdAt: Date;
 
   @ApiProperty()

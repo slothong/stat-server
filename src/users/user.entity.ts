@@ -3,7 +3,9 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { Comment } from '@/comments/comment.entity';
 
 export type Gender = 'male' | 'female' | 'other';
 
@@ -26,4 +28,7 @@ export class User {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @OneToMany(() => Comment, (comment) => comment.author)
+  comments: Comment[];
 }
