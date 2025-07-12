@@ -1,5 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { Poll } from '@/polls/poll.entity';
+import { Vote } from '@/votes/vote.entity';
 
 @Entity({ name: 'options' })
 export class Option {
@@ -11,4 +18,7 @@ export class Option {
 
   @Column({ type: 'text' })
   optionText: string;
+
+  @OneToMany(() => Vote, (vote) => vote.option, { eager: true })
+  votes: Vote[];
 }

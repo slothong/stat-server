@@ -10,10 +10,8 @@ import { Poll } from './poll.entity';
 import { CreatePollDto } from './dto/create-poll.dto';
 import { Option } from '@/options/option.entity';
 import { Vote } from '@/votes/vote.entity';
-import { PollResponseDto } from './dto/poll-response.dto';
 import { VotesService } from '@/votes/votes.service';
 import { User } from '@/users/user.entity';
-import { PollResultDto } from './dto/poll-result-dto';
 
 @Injectable()
 export class PollsService {
@@ -30,30 +28,17 @@ export class PollsService {
     private readonly votesService: VotesService,
   ) {}
 
-  async findAll(userId?: string): Promise<PollResponseDto[]> {
-    const polls = await this.pollRepository.find({ relations: ['options'] });
-    if (userId == null) return polls;
-
-    return await Promise.all(
-      polls.map(async (poll) => {
-        const hasVoted = await this.votesService.hasVoted(userId, poll.id);
-        return {
-          ...poll,
-          hasVoted,
-          createdBy: poll.createdBy && {
-            id: poll.createdBy.id,
-            username: poll.createdBy.username,
-            createdAt: poll.createdBy.createdAt,
-          },
-        };
-      }),
-    );
+  async findAll(): Promise<Poll[]> {
+    const polls = await this.pollRepository.find({
+      relations: ['options', 'votes', 'votes.user', 'votes.option'],
+    });
+    return polls;
   }
 
   async findOne(pollId: string): Promise<Poll> {
     const poll = await this.pollRepository.findOne({
       where: { id: pollId },
-      relations: ['options'],
+      relations: ['options', 'votes', 'votes.user', 'votes.option', 'likedBy'],
     });
     if (!poll) {
       throw new NotFoundException();
@@ -92,35 +77,47 @@ export class PollsService {
     return poll;
   }
 
-  async getResult(pollId: string, userId: string): Promise<PollResultDto> {
-    if (!(await this.votesService.hasVoted(userId, pollId))) {
-      throw new BadRequestException('Not voted poll');
-    }
+  async likePoll(pollId: string, userId: string): Promise<Poll> {
     const poll = await this.pollRepository.findOne({
       where: { id: pollId },
-      relations: ['options'],
+      relations: ['likedBy'],
     });
-    if (!poll) throw new NotFoundException(`Poll not found: ${pollId}`);
-    const votes = await this.voteRepository.find({
-      where: {
-        poll: {
-          id: pollId,
-        },
-      },
-      relations: ['option', 'user'],
+    if (!poll) {
+      throw new NotFoundException(`Poll not found: ${pollId}`);
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
     });
-    return {
-      pollId,
-      question: poll.question,
-      description: poll.description,
-      options: poll.options.map((option) => ({
-        id: option.id,
-        optionText: option.optionText,
-        voteCount: votes.filter((vote) => vote.option.id === option.id).length,
-        votedByMe: !!votes.find(
-          (vote) => vote.option.id === option.id && vote.user.id === userId,
-        ),
-      })),
-    };
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    if (!poll.likedBy.some((likedUser) => likedUser.id === userId)) {
+      poll.likedBy.push(user);
+    }
+
+    return this.pollRepository.save(poll);
+  }
+
+  async unlikePoll(pollId: string, userId: string): Promise<Poll> {
+    const poll = await this.pollRepository.findOne({
+      where: { id: pollId },
+      relations: ['likedBy'],
+    });
+    if (!poll) {
+      throw new NotFoundException(`Poll not found: ${pollId}`);
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    poll.likedBy = poll.likedBy.filter((likedUser) => likedUser.id !== userId);
+
+    return this.pollRepository.save(poll);
   }
 }

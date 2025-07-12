@@ -17,4 +17,7 @@ export class PollSummaryDto {
 
   @ApiProperty({ type: [OptionResponseDto] })
   options: OptionResponseDto[];
+
+  @ApiProperty()
+  likedByCount: number;
 }

@@ -23,4 +23,10 @@ export class PollResponseDto {
 
   @ApiProperty()
   hasVoted?: boolean;
+
+  @ApiProperty()
+  likedByCount: number;
+
+  @ApiProperty()
+  likedByMe?: boolean;
 }

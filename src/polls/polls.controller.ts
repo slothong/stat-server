@@ -8,6 +8,8 @@ import {
   Request,
   UnauthorizedException,
   BadRequestException,
+  Delete,
+  Query,
 } from '@nestjs/common';
 import { PollsService } from './polls.service';
 import { CreatePollDto } from './dto/create-poll.dto';
@@ -19,10 +21,10 @@ import { AuthRequest } from '@/auth/auth-request';
 import { VotesService } from '@/votes/votes.service';
 import { OptionalJwtAuthGuard } from '@/auth/optional-auth-guard';
 import { PollSummaryDto } from './dto/poll-summary.dto';
-import { PollResultDto } from './dto/poll-result-dto';
 import { CreateCommentDto } from './dto/create-comment-dto';
 import { CommentsService } from '@/comments/comments.service';
 import { CommentResponseDto } from '@/comments/dto/comment-response-dto';
+import { Poll } from './poll.entity';
 
 @Controller('polls')
 export class PollsController {
@@ -34,10 +36,24 @@ export class PollsController {
 
   @ApiResponse({ status: 200, type: [PollSummaryDto] })
   @Get()
-  async findAll(@Request() req: AuthRequest): Promise<PollSummaryDto[]> {
-    return (await this.pollsService.findAll(req.user?.userId)).sort(
+  async findAll(
+    @Request() req: AuthRequest,
+    @Query('userId') queryUserId: string,
+  ): Promise<PollSummaryDto[]> {
+    if (queryUserId) {
+      const polls = (await this.pollsService.findAll())
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .filter((poll) => poll.createdBy.id === queryUserId);
+      if (queryUserId === req.user?.userId) {
+        return polls.map((poll) => this.mapPollToResponse(poll, queryUserId));
+      }
+      return polls.map((poll) => this.mapPollToResponse(poll));
+    }
+    const userId = req.user?.userId;
+    const polls = (await this.pollsService.findAll()).sort(
       (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
     );
+    return polls.map((poll) => this.mapPollToResponse(poll, userId));
   }
 
   @ApiResponse({ status: 200, type: PollResponseDto })
@@ -47,14 +63,10 @@ export class PollsController {
     @Param('id') pollId: string,
     @Request() req: AuthRequest,
   ): Promise<PollResponseDto> {
+    const userId = req.user?.userId;
     const poll = await this.pollsService.findOne(pollId);
-    if (req.user) {
-      return {
-        ...poll,
-        hasVoted: await this.votesService.hasVoted(req.user.userId, poll.id),
-      };
-    }
-    return poll;
+
+    return this.mapPollToResponse(poll, userId);
   }
 
   @ApiBody({ type: CreatePollDto })
@@ -67,15 +79,7 @@ export class PollsController {
   ): Promise<PollResponseDto> {
     if (!req.user) throw new UnauthorizedException();
     const poll = await this.pollsService.create(createPollDto, req.user.userId);
-    return { ...poll, hasVoted: false };
-  }
-
-  @ApiResponse({ status: 200, type: PollResultDto })
-  @UseGuards(AuthGuard('jwt'))
-  @Get(':id/result')
-  async getResult(@Param('id') pollId: string, @Request() req: AuthRequest) {
-    if (!req.user) throw new UnauthorizedException();
-    return await this.pollsService.getResult(pollId, req.user.userId);
+    return { ...poll, hasVoted: false, likedByCount: 0 };
   }
 
   @ApiBody({ type: [VoteDto] })
@@ -105,6 +109,7 @@ export class PollsController {
     return {
       ...poll,
       hasVoted: true,
+      likedByCount: 0,
     };
   }
 
@@ -161,5 +166,73 @@ export class PollsController {
         username,
       },
     };
+  }
+
+  @ApiResponse({ status: 201, type: PollResponseDto })
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':id/like')
+  async likePoll(
+    @Param('id') pollId: string,
+    @Request() req: AuthRequest,
+  ): Promise<PollResponseDto> {
+    const user = req.user;
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    const poll = await this.pollsService.likePoll(pollId, user.userId);
+    return {
+      ...poll,
+      hasVoted: await this.votesService.hasVoted(user.userId, poll.id),
+      likedByCount: poll.likedBy ? poll.likedBy.length : 0,
+    };
+  }
+
+  @ApiResponse({ status: 200, type: PollResponseDto })
+  @UseGuards(AuthGuard('jwt'))
+  @Delete(':id/like')
+  async unlikePoll(
+    @Param('id') pollId: string,
+    @Request() req: AuthRequest,
+  ): Promise<PollResponseDto> {
+    const user = req.user;
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    const poll = await this.pollsService.unlikePoll(pollId, user.userId);
+    return {
+      ...poll,
+      hasVoted: await this.votesService.hasVoted(user.userId, poll.id),
+      likedByCount: poll.likedBy ? poll.likedBy.length : 0,
+    };
+  }
+
+  private mapPollToResponse(poll: Poll, userId?: string): PollResponseDto {
+    const likedByCount = poll.likedBy?.length ?? 0;
+    const votedByMe = poll.votes?.some((v) => v.user.id === userId);
+
+    const dto = {
+      ...poll,
+      hasVoted: userId
+        ? poll.votes?.some((v) => v.user.id === userId)
+        : undefined,
+      likedByCount,
+      likedByMe: userId
+        ? poll.likedBy?.some((user) => user.id === userId)
+        : false,
+    };
+    if (votedByMe) {
+      return {
+        ...dto,
+        options: dto.options.map((option) => ({
+          ...option,
+          voteCount: poll.votes.filter((vote) => vote.option.id === option.id)
+            .length,
+          votedByMe: !!poll.votes.find(
+            (vote) => vote.option.id === option.id && vote.user.id === userId,
+          ),
+        })),
+      };
+    }
+    return dto;
   }
 }

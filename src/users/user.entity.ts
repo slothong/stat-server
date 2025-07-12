@@ -4,8 +4,11 @@ import {
   Column,
   CreateDateColumn,
   OneToMany,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { Comment } from '@/comments/comment.entity';
+import { Poll } from '@/polls/poll.entity';
 
 export type Gender = 'male' | 'female' | 'other';
 
@@ -31,4 +34,8 @@ export class User {
 
   @OneToMany(() => Comment, (comment) => comment.author)
   comments: Comment[];
+
+  @ManyToMany(() => Poll, (poll) => poll.likedBy)
+  @JoinTable()
+  likedPolls: Poll[];
 }
