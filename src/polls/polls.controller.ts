@@ -106,4 +106,34 @@ export class PollsController {
     const poll = await this.pollsService.unlikePoll(pollId, user.userId);
     return PollMapper.toResponseDto(poll, { userId: user.userId });
   }
+
+  @ApiResponse({ status: 201, type: PollResponseDto })
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':id/bookmark')
+  async bookmarkPoll(
+    @Param('id') pollId: string,
+    @Request() req: AuthRequest,
+  ): Promise<PollResponseDto> {
+    const user = req.user;
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    const poll = await this.pollsService.bookmarkPoll(pollId, user.userId);
+    return PollMapper.toResponseDto(poll, { userId: user.userId });
+  }
+
+  @ApiResponse({ status: 200, type: PollResponseDto })
+  @UseGuards(AuthGuard('jwt'))
+  @Delete(':id/bookmark')
+  async unbookmarkPoll(
+    @Param('id') pollId: string,
+    @Request() req: AuthRequest,
+  ): Promise<PollResponseDto> {
+    const user = req.user;
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    const poll = await this.pollsService.unbookmarkPoll(pollId, user.userId);
+    return PollMapper.toResponseDto(poll, { userId: user.userId });
+  }
 }

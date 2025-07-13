@@ -41,4 +41,8 @@ export class User {
   @ManyToMany(() => Poll, (poll) => poll.likedBy)
   @JoinTable()
   likedPolls: Poll[];
+
+  @ManyToMany(() => Poll, (poll) => poll.bookmarkedBy)
+  @JoinTable()
+  bookmarkedPolls: Poll[];
 }

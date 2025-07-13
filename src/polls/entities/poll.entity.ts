@@ -6,8 +6,6 @@ import {
   OneToMany,
   ManyToOne,
   ManyToMany,
-  RelationCount,
-  VirtualColumn,
 } from 'typeorm';
 import { Option } from '@/polls/entities/option.entity';
 import { User } from '@/users/user.entity';
@@ -47,4 +45,7 @@ export class Poll {
 
   @OneToMany(() => Vote, (vote) => vote.poll, { eager: true })
   votes: Vote[];
+
+  @ManyToMany(() => User, (user) => user.bookmarkedPolls)
+  bookmarkedBy: User[];
 }

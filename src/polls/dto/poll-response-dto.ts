@@ -32,4 +32,7 @@ export class PollResponseDto {
 
   @ApiProperty()
   commentCount: number;
+
+  @ApiProperty()
+  bookmarkedByMe?: boolean;
 }

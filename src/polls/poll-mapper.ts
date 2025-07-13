@@ -11,8 +11,13 @@ export class PollMapper {
       ? poll.votes?.some((v) => v.user.id === userId)
       : undefined;
 
+    // TODO: 모든 likedBy를 가져오지 않고, likedByCount만 가져오는 방법을 찾아야 함
     const likedByMe = userId
       ? poll.likedBy?.some((u) => u.id === userId)
+      : undefined;
+
+    const bookmarkedByMe = userId
+      ? poll.bookmarkedBy?.some((u) => u.id === userId)
       : undefined;
 
     return {
@@ -40,6 +45,7 @@ export class PollMapper {
       likedByCount: poll.likedBy?.length ?? 0,
       likedByMe,
       commentCount: poll.commentCount ?? 0,
+      bookmarkedByMe,
     };
   }
 }

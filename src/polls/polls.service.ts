@@ -30,6 +30,7 @@ export class PollsService {
       .leftJoinAndSelect('vote.user', 'voteUser')
       .leftJoinAndSelect('vote.option', 'voteOption')
       .leftJoinAndSelect('poll.likedBy', 'likedBy')
+      .leftJoinAndSelect('poll.bookmarkedBy', 'bookmarkedBy')
       .loadRelationCountAndMap('poll.commentCount', 'poll.comments') // 댓글 수만 추가
       .getMany();
     return polls;
@@ -38,7 +39,17 @@ export class PollsService {
   async findOne(pollId: string): Promise<Poll> {
     const poll = await this.pollRepository.findOne({
       where: { id: pollId },
-      relations: ['options', 'votes', 'votes.user', 'votes.option', 'likedBy'],
+      relations: [
+        'options',
+        'votes',
+        'votes.user',
+        'votes.option',
+        'likedBy',
+        'bookmarkedBy',
+        'createdBy',
+        'comments',
+        'comments.author',
+      ],
     });
     if (!poll) {
       throw new NotFoundException();
@@ -111,6 +122,48 @@ export class PollsService {
     }
 
     poll.likedBy = poll.likedBy.filter((likedUser) => likedUser.id !== userId);
+
+    return this.pollRepository.save(poll);
+  }
+
+  async bookmarkPoll(pollId: string, userId: string): Promise<Poll> {
+    const poll = await this.findOne(pollId);
+    if (!poll) {
+      throw new NotFoundException(`Poll not found: ${pollId}`);
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    if (
+      !poll.bookmarkedBy.some((bookmarkedUser) => bookmarkedUser.id === userId)
+    ) {
+      poll.bookmarkedBy.push(user);
+    }
+
+    return this.pollRepository.save(poll);
+  }
+
+  async unbookmarkPoll(pollId: string, userId: string): Promise<Poll> {
+    const poll = await this.findOne(pollId);
+    if (!poll) {
+      throw new NotFoundException(`Poll not found: ${pollId}`);
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    poll.bookmarkedBy = poll.bookmarkedBy.filter(
+      (bookmarkedUser) => bookmarkedUser.id !== userId,
+    );
 
     return this.pollRepository.save(poll);
   }
