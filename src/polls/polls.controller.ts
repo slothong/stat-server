@@ -18,7 +18,6 @@ import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { AuthRequest } from '@/auth/auth-request';
 import { VotesService } from '@/polls/votes.service';
 import { OptionalJwtAuthGuard } from '@/auth/optional-auth-guard';
-import { PollMapper } from './poll-mapper';
 
 @Controller('polls')
 export class PollsController {
@@ -41,14 +40,12 @@ export class PollsController {
     if (queryUserId) {
       const myPolls = polls.filter((poll) => poll.createdBy.id === queryUserId);
       if (queryUserId === req.user?.userId) {
-        return myPolls.map((poll) =>
-          PollMapper.toResponseDto(poll, { userId: queryUserId }),
-        );
+        return myPolls.map((poll) => new PollResponseDto(poll, queryUserId));
       }
-      return myPolls.map((poll) => PollMapper.toResponseDto(poll));
+      return myPolls.map((poll) => new PollResponseDto(poll));
     }
     const userId = req.user?.userId;
-    return polls.map((poll) => PollMapper.toResponseDto(poll, { userId }));
+    return polls.map((poll) => new PollResponseDto(poll, userId));
   }
 
   @ApiResponse({ status: 200, type: PollResponseDto })
@@ -61,7 +58,7 @@ export class PollsController {
     const userId = req.user?.userId;
     const poll = await this.pollsService.findOne(pollId);
 
-    return PollMapper.toResponseDto(poll, { userId });
+    return new PollResponseDto(poll, userId);
   }
 
   @ApiBody({ type: CreatePollDto })
@@ -74,7 +71,7 @@ export class PollsController {
   ): Promise<PollResponseDto> {
     if (!req.user) throw new UnauthorizedException();
     const poll = await this.pollsService.create(createPollDto, req.user.userId);
-    return PollMapper.toResponseDto(poll, { userId: req.user.userId });
+    return new PollResponseDto(poll, req.user.userId);
   }
 
   @ApiResponse({ status: 201, type: PollResponseDto })
@@ -89,7 +86,7 @@ export class PollsController {
       throw new UnauthorizedException();
     }
     const poll = await this.pollsService.likePoll(pollId, user.userId);
-    return PollMapper.toResponseDto(poll, { userId: user.userId });
+    return new PollResponseDto(poll, user.userId);
   }
 
   @ApiResponse({ status: 200, type: PollResponseDto })
@@ -104,7 +101,7 @@ export class PollsController {
       throw new UnauthorizedException();
     }
     const poll = await this.pollsService.unlikePoll(pollId, user.userId);
-    return PollMapper.toResponseDto(poll, { userId: user.userId });
+    return new PollResponseDto(poll, user.userId);
   }
 
   @ApiResponse({ status: 201, type: PollResponseDto })
@@ -119,7 +116,7 @@ export class PollsController {
       throw new UnauthorizedException();
     }
     const poll = await this.pollsService.bookmarkPoll(pollId, user.userId);
-    return PollMapper.toResponseDto(poll, { userId: user.userId });
+    return new PollResponseDto(poll, user.userId);
   }
 
   @ApiResponse({ status: 200, type: PollResponseDto })
@@ -134,6 +131,6 @@ export class PollsController {
       throw new UnauthorizedException();
     }
     const poll = await this.pollsService.unbookmarkPoll(pollId, user.userId);
-    return PollMapper.toResponseDto(poll, { userId: user.userId });
+    return new PollResponseDto(poll, user.userId);
   }
 }

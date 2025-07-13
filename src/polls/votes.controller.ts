@@ -14,7 +14,6 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { VotesService } from './votes.service';
-import { PollMapper } from './poll-mapper';
 
 @Controller('polls/:pollId/votes')
 export class PollsVotesController {
@@ -44,6 +43,6 @@ export class PollsVotesController {
       voteDto.optionIds,
       user.userId,
     );
-    return PollMapper.toResponseDto(poll, { userId: user.userId });
+    return new PollResponseDto(poll, user.userId);
   }
 }

@@ -1,3 +1,4 @@
+import { User } from '@/users/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PollCreatedByDto {
@@ -5,4 +6,9 @@ export class PollCreatedByDto {
   id: string;
   @ApiProperty()
   username: string;
+
+  constructor(user: User) {
+    this.id = user.id;
+    this.username = user.username;
+  }
 }

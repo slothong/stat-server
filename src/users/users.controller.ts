@@ -24,6 +24,6 @@ export class UsersController {
     if (!user) {
       throw new UnauthorizedException();
     }
-    return user;
+    return new UserResponseDto(user);
   }
 }

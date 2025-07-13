@@ -16,7 +16,6 @@ export class CommentsService {
       },
       relations: ['author', 'poll'],
     });
-    console.log('#####', pollId, comments);
     return comments;
   }
 

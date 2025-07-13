@@ -1,4 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Comment } from '../entities/comment.entity';
+import { User } from '@/users/user.entity';
 
 export class CommentAuthorDto {
   @ApiProperty()
@@ -6,6 +8,11 @@ export class CommentAuthorDto {
 
   @ApiProperty()
   username: string;
+
+  constructor(user: User) {
+    this.userId = user.id;
+    this.username = user.username;
+  }
 }
 
 export class CommentResponseDto {
@@ -23,4 +30,12 @@ export class CommentResponseDto {
 
   @ApiProperty()
   updatedAt: Date;
+
+  constructor(comment: Comment) {
+    this.id = comment.id;
+    this.content = comment.content;
+    this.author = new CommentAuthorDto(comment.author);
+    this.createdAt = comment.createdAt;
+    this.updatedAt = comment.updatedAt;
+  }
 }

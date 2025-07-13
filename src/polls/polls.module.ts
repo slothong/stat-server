@@ -11,11 +11,17 @@ import { CommentsService } from './comments.service';
 import { PollsCommentsController } from './comments.controller';
 import { PollsVotesController } from './votes.controller';
 import { VotesService } from './votes.service';
+import { UserPollsController } from './user-polls.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Poll, Option, Vote, User, Comment])],
   providers: [PollsService, CommentsService, VotesService],
-  controllers: [PollsController, PollsCommentsController, PollsVotesController],
+  controllers: [
+    PollsController,
+    PollsCommentsController,
+    PollsVotesController,
+    UserPollsController,
+  ],
   exports: [PollsService],
 })
 export class PollsModule {}

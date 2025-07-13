@@ -14,7 +14,6 @@ import { CreateCommentDto } from './dto/create-comment-dto';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthRequest } from '@/auth/auth-request';
 import { CommentsService } from './comments.service';
-import { CommentMapper } from './comment-mapper';
 
 @Controller('polls/:pollId/comments')
 export class PollsCommentsController {
@@ -32,7 +31,7 @@ export class PollsCommentsController {
     if (userId == null || username == null) throw new UnauthorizedException();
     const comments = await this.commentsService.getComments(pollId);
     return comments
-      .map((comment) => CommentMapper.toResponseDto(comment))
+      .map((comment) => new CommentResponseDto(comment))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
@@ -54,6 +53,6 @@ export class PollsCommentsController {
       userId,
       content,
     );
-    return CommentMapper.toResponseDto(comment);
+    return new CommentResponseDto(comment);
   }
 }

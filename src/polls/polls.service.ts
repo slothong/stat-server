@@ -57,6 +57,23 @@ export class PollsService {
     return poll;
   }
 
+  async getLikedposts(userId: string): Promise<Poll[]> {
+    const polls = await this.pollRepository
+      .createQueryBuilder('poll')
+      .innerJoin('poll.likedBy', 'user', 'user.id = :userId', { userId })
+      .leftJoinAndSelect('poll.options', 'option')
+      .leftJoinAndSelect('poll.votes', 'vote')
+      .leftJoinAndSelect('poll.createdBy', 'createdBy')
+      .leftJoinAndSelect('vote.user', 'voteUser')
+      .leftJoinAndSelect('vote.option', 'voteOption')
+      .leftJoinAndSelect('poll.likedBy', 'likedBy')
+      .leftJoinAndSelect('poll.bookmarkedBy', 'bookmarkedBy')
+      .loadRelationCountAndMap('poll.commentCount', 'poll.comments') // 댓글 수만 추가
+      .orderBy('poll.createdAt', 'DESC')
+      .getMany();
+    return polls;
+  }
+
   async create(data: CreatePollDto, userId: string): Promise<Poll> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
