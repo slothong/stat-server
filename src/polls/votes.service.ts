@@ -5,9 +5,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Vote } from './vote.entity';
+import { Vote } from './entities/vote.entity';
 import { Repository } from 'typeorm';
-import { Poll } from '@/polls/poll.entity';
+import { Poll } from '@/polls/entities/poll.entity';
 import { User } from '@/users/user.entity';
 
 @Injectable()

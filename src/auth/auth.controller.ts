@@ -11,7 +11,6 @@ import {
 import { AuthService } from './auth.service';
 import { UsersService } from '@/users/users.service';
 import { Request, Response } from 'express';
-import { Gender } from '@/users/user.entity';
 import { RegisterDto } from './register-dto';
 
 @Controller('auth')
@@ -23,12 +22,13 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() dto: RegisterDto) {
-    const { username, password, birth, gender } = dto;
+    const { email, username, password, birth, gender } = dto;
     const existing = await this.usersService.findByUsername(username);
     if (existing) {
       throw new BadRequestException('Username already exists');
     }
     const user = await this.usersService.create(
+      email,
       username,
       password,
       new Date(birth),
@@ -36,6 +36,7 @@ export class AuthController {
     );
     return {
       id: user.id,
+      email: user.email,
       username: user.username,
       birth: user.birth,
       gender: user.gender,
@@ -44,11 +45,11 @@ export class AuthController {
 
   @Post('login')
   async login(
-    @Body('username') username: string,
+    @Body('email') email: string,
     @Body('password') password: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const user = await this.usersService.findByUsername(username);
+    const user = await this.usersService.findByEmail(email);
     if (!user || !(await this.usersService.validatePassword(user, password))) {
       throw new BadRequestException('Invalid credentials');
     }

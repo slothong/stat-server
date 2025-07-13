@@ -12,6 +12,7 @@ export class UsersService {
   ) {}
 
   async create(
+    email: string,
     username: string,
     password: string,
     birth: Date,
@@ -19,6 +20,7 @@ export class UsersService {
   ) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = this.userRepository.create({
+      email,
       username,
       password: hashedPassword,
       birth,
@@ -29,6 +31,10 @@ export class UsersService {
 
   async findByUsername(username: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { username } });
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { email } });
   }
 
   async validatePassword(user: User, password: string): Promise<boolean> {

@@ -1,5 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { Comment } from './comment.entity';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { Comment } from './entities/comment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -14,7 +18,9 @@ export class CommentsService {
       where: {
         pollId,
       },
+      relations: ['author', 'poll'],
     });
+    console.log('#####', pollId, comments);
     return comments;
   }
 
@@ -27,6 +33,17 @@ export class CommentsService {
     comment.pollId = pollId;
     comment.authorId = userId;
     comment.content = content;
-    return await this.commentRepository.save(comment);
+
+    const savedComment = await this.commentRepository.save(comment);
+
+    const commentWithAuthor = await this.commentRepository.findOne({
+      where: { id: savedComment.id },
+      relations: ['author'],
+    });
+    if (!commentWithAuthor) {
+      throw new InternalServerErrorException('Comment not found after saving');
+    }
+
+    return commentWithAuthor;
   }
 }

@@ -1,4 +1,4 @@
-import { OptionResponseDto } from '@/options/option-response.dto';
+import { OptionResponseDto } from '@/polls/dto/option-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { PollCreatedByDto } from './poll-created-by-dto';
 
@@ -29,4 +29,7 @@ export class PollResponseDto {
 
   @ApiProperty()
   likedByMe?: boolean;
+
+  @ApiProperty()
+  commentCount: number;
 }

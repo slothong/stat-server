@@ -6,11 +6,13 @@ import {
   OneToMany,
   ManyToOne,
   ManyToMany,
+  RelationCount,
+  VirtualColumn,
 } from 'typeorm';
-import { Option } from '@/options/option.entity';
+import { Option } from '@/polls/entities/option.entity';
 import { User } from '@/users/user.entity';
-import { Comment } from '@/comments/comment.entity';
-import { Vote } from '@/votes/vote.entity';
+import { Comment } from '@/polls/entities/comment.entity';
+import { Vote } from '@/polls/entities/vote.entity';
 
 @Entity('polls')
 export class Poll {
@@ -37,6 +39,8 @@ export class Poll {
 
   @OneToMany(() => Comment, (comment) => comment.poll)
   comments: Comment[];
+
+  commentCount?: number;
 
   @ManyToMany(() => User, (user) => user.likedPolls)
   likedBy: User[];

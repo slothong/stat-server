@@ -1,23 +1,21 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Poll } from './poll.entity';
+import { Poll } from './entities/poll.entity';
 import { PollsService } from './polls.service';
 import { PollsController } from './polls.controller';
-import { Option } from '@/options/option.entity';
-import { VotesModule } from '@/votes/votes.module';
-import { Vote } from '@/votes/vote.entity';
+import { Option } from '@/polls/entities/option.entity';
+import { Vote } from '@/polls/entities/vote.entity';
 import { User } from '@/users/user.entity';
-import { Comment } from '@/comments/comment.entity';
-import { CommentsModule } from '@/comments/comments.module';
+import { Comment } from '@/polls/entities/comment.entity';
+import { CommentsService } from './comments.service';
+import { PollsCommentsController } from './comments.controller';
+import { PollsVotesController } from './votes.controller';
+import { VotesService } from './votes.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Poll, Option, Vote, User, Comment]),
-    VotesModule,
-    CommentsModule,
-  ],
-  providers: [PollsService],
-  controllers: [PollsController],
+  imports: [TypeOrmModule.forFeature([Poll, Option, Vote, User, Comment])],
+  providers: [PollsService, CommentsService, VotesService],
+  controllers: [PollsController, PollsCommentsController, PollsVotesController],
   exports: [PollsService],
 })
 export class PollsModule {}

@@ -1,16 +1,13 @@
 import {
-  BadRequestException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Poll } from './poll.entity';
-import { CreatePollDto } from './dto/create-poll.dto';
-import { Option } from '@/options/option.entity';
-import { Vote } from '@/votes/vote.entity';
-import { VotesService } from '@/votes/votes.service';
+import { Poll } from './entities/poll.entity';
+import { CreatePollDto } from './dto/create-poll-dto';
+import { Option } from '@/polls/entities/option.entity';
 import { User } from '@/users/user.entity';
 
 @Injectable()
@@ -20,18 +17,21 @@ export class PollsService {
     private readonly pollRepository: Repository<Poll>,
     @InjectRepository(Option)
     private readonly optionRepository: Repository<Option>,
-    @InjectRepository(Vote)
-    private readonly voteRepository: Repository<Vote>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-
-    private readonly votesService: VotesService,
   ) {}
 
   async findAll(): Promise<Poll[]> {
-    const polls = await this.pollRepository.find({
-      relations: ['options', 'votes', 'votes.user', 'votes.option'],
-    });
+    const polls = await this.pollRepository
+      .createQueryBuilder('poll')
+      .leftJoinAndSelect('poll.options', 'option')
+      .leftJoinAndSelect('poll.votes', 'vote')
+      .leftJoinAndSelect('poll.createdBy', 'createdBy')
+      .leftJoinAndSelect('vote.user', 'voteUser')
+      .leftJoinAndSelect('vote.option', 'voteOption')
+      .leftJoinAndSelect('poll.likedBy', 'likedBy')
+      .loadRelationCountAndMap('poll.commentCount', 'poll.comments') // 댓글 수만 추가
+      .getMany();
     return polls;
   }
 
@@ -78,10 +78,7 @@ export class PollsService {
   }
 
   async likePoll(pollId: string, userId: string): Promise<Poll> {
-    const poll = await this.pollRepository.findOne({
-      where: { id: pollId },
-      relations: ['likedBy'],
-    });
+    const poll = await this.findOne(pollId);
     if (!poll) {
       throw new NotFoundException(`Poll not found: ${pollId}`);
     }
@@ -101,10 +98,7 @@ export class PollsService {
   }
 
   async unlikePoll(pollId: string, userId: string): Promise<Poll> {
-    const poll = await this.pollRepository.findOne({
-      where: { id: pollId },
-      relations: ['likedBy'],
-    });
+    const poll = await this.findOne(pollId);
     if (!poll) {
       throw new NotFoundException(`Poll not found: ${pollId}`);
     }

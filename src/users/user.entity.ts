@@ -7,8 +7,8 @@ import {
   ManyToMany,
   JoinTable,
 } from 'typeorm';
-import { Comment } from '@/comments/comment.entity';
-import { Poll } from '@/polls/poll.entity';
+import { Comment } from '@/polls/entities/comment.entity';
+import { Poll } from '@/polls/entities/poll.entity';
 
 export type Gender = 'male' | 'female' | 'other';
 
@@ -16,6 +16,9 @@ export type Gender = 'male' | 'female' | 'other';
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ unique: true, length: 50 })
+  email: string;
 
   @Column({ unique: true, length: 50 })
   username: string;

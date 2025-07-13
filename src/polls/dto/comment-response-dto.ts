@@ -18,14 +18,9 @@ export class CommentResponseDto {
   @ApiProperty()
   author: CommentAuthorDto;
 
-  // @ApiProperty({ type: [CommentAuthorDto] })
-  // replies: CommentAuthorDto[];
-
   @ApiProperty()
   createdAt: Date;
 
   @ApiProperty()
   updatedAt: Date;
-
-  // @ApiProperty() deletedAt: Date;
 }

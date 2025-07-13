@@ -7,7 +7,6 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PollsModule } from './polls/polls.module';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -32,7 +31,6 @@ import { CommentsModule } from './comments/comments.module';
     AuthModule,
     UsersModule,
     PollsModule,
-    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

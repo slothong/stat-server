@@ -5,4 +5,8 @@ export class OptionResponseDto {
   id: string;
   @ApiProperty()
   optionText: string;
+  @ApiProperty()
+  voteCount?: number;
+  @ApiProperty()
+  votedByMe?: boolean;
 }
