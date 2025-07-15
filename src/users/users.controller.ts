@@ -10,10 +10,15 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiResponse } from '@nestjs/swagger';
 import { UserResponseDto } from './user-response.dto';
 import { UsersService } from './users.service';
+import { PollService } from '@/polls/polls.service';
+import { PollResponseDto } from '@/polls/response-dto/poll-response-dto';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly pollService: PollService,
+  ) {}
 
   @ApiResponse({ status: 200, type: UserResponseDto })
   @UseGuards(AuthGuard('jwt'))
@@ -25,5 +30,29 @@ export class UsersController {
       throw new UnauthorizedException();
     }
     return new UserResponseDto(user);
+  }
+
+  @ApiResponse({ status: 200, type: [PollResponseDto] })
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':id/liked-polls')
+  async getLikedPolls(@Request() req: AuthRequest): Promise<PollResponseDto[]> {
+    const userId = req.user?.userId;
+    if (userId == null) throw new UnauthorizedException();
+
+    const polls = await this.pollService.getLikedposts(userId);
+    return polls.map((poll) => new PollResponseDto(poll, userId));
+  }
+
+  @ApiResponse({ status: 200, type: [PollResponseDto] })
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':id/bookmarked-polls')
+  async getBookmarkedPolls(
+    @Request() req: AuthRequest,
+  ): Promise<PollResponseDto[]> {
+    const userId = req.user?.userId;
+    if (userId == null) throw new UnauthorizedException();
+
+    const polls = await this.pollService.getBookmarkedPolls(userId);
+    return polls.map((poll) => new PollResponseDto(poll, userId));
   }
 }

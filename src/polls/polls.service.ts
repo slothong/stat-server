@@ -5,13 +5,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Poll } from './entities/poll.entity';
-import { CreatePollDto } from './dto/create-poll-dto';
-import { Option } from '@/polls/entities/option.entity';
+import { Poll } from './poll.entity';
+import { CreatePollRequestDto } from './request-dto/create-poll-request-dto';
+import { Option } from '@/polls/option.entity';
 import { User } from '@/users/user.entity';
 
 @Injectable()
-export class PollsService {
+export class PollService {
   constructor(
     @InjectRepository(Poll)
     private readonly pollRepository: Repository<Poll>,
@@ -74,7 +74,24 @@ export class PollsService {
     return polls;
   }
 
-  async create(data: CreatePollDto, userId: string): Promise<Poll> {
+  async getBookmarkedPolls(userId: string): Promise<Poll[]> {
+    const polls = await this.pollRepository
+      .createQueryBuilder('poll')
+      .innerJoin('poll.bookmarkedBy', 'user', 'user.id = :userId', { userId })
+      .leftJoinAndSelect('poll.options', 'option')
+      .leftJoinAndSelect('poll.votes', 'vote')
+      .leftJoinAndSelect('poll.createdBy', 'createdBy')
+      .leftJoinAndSelect('vote.user', 'voteUser')
+      .leftJoinAndSelect('vote.option', 'voteOption')
+      .leftJoinAndSelect('poll.likedBy', 'likedBy')
+      .leftJoinAndSelect('poll.bookmarkedBy', 'bookmarkedBy')
+      .loadRelationCountAndMap('poll.commentCount', 'poll.comments') // 댓글 수만 추가
+      .orderBy('poll.createdAt', 'DESC')
+      .getMany();
+    return polls;
+  }
+
+  async create(data: CreatePollRequestDto, userId: string): Promise<Poll> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });

@@ -7,10 +7,10 @@ import {
   ManyToOne,
   ManyToMany,
 } from 'typeorm';
-import { Option } from '@/polls/entities/option.entity';
+import { Option } from '@/polls/option.entity';
 import { User } from '@/users/user.entity';
-import { Comment } from '@/polls/entities/comment.entity';
-import { Vote } from '@/polls/entities/vote.entity';
+import { Comment } from '@/comments/comment.entity';
+import { Vote } from '@/votes/vote.entity';
 
 @Entity('polls')
 export class Poll {

@@ -5,8 +5,8 @@ import {
   ManyToOne,
   OneToMany,
 } from 'typeorm';
-import { Poll } from '@/polls/entities/poll.entity';
-import { Vote } from '@/polls/entities/vote.entity';
+import { Poll } from '@/polls/poll.entity';
+import { Vote } from '@/votes/vote.entity';
 
 @Entity({ name: 'options' })
 export class Option {

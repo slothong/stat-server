@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Comment } from '../entities/comment.entity';
+import { Comment } from '../../comments/comment.entity';
 import { User } from '@/users/user.entity';
 
 export class CommentAuthorDto {

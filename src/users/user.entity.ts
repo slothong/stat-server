@@ -7,8 +7,8 @@ import {
   ManyToMany,
   JoinTable,
 } from 'typeorm';
-import { Comment } from '@/polls/entities/comment.entity';
-import { Poll } from '@/polls/entities/poll.entity';
+import { Comment } from '@/comments/comment.entity';
+import { Poll } from '@/polls/poll.entity';
 
 export type Gender = 'male' | 'female' | 'other';
 

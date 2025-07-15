@@ -1,7 +1,29 @@
-import { OptionResponseDto } from '@/polls/dto/option-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { PollCreatedByDto } from './poll-created-by-dto';
-import { Poll } from '../entities/poll.entity';
+import { Poll } from '../poll.entity';
+import { User } from '@/users/user.entity';
+
+export class OptionResponseDto {
+  @ApiProperty()
+  id: string;
+  @ApiProperty()
+  optionText: string;
+  @ApiProperty()
+  voteCount?: number;
+  @ApiProperty()
+  votedByMe?: boolean;
+}
+
+export class PollCreatedByDto {
+  @ApiProperty()
+  id: string;
+  @ApiProperty()
+  username: string;
+
+  constructor(user: User) {
+    this.id = user.id;
+    this.username = user.username;
+  }
+}
 
 export class PollResponseDto {
   @ApiProperty()
@@ -71,7 +93,7 @@ export class PollResponseDto {
     this.hasVoted = hasVoted;
     this.likedByCount = poll.likedBy?.length ?? 0;
     this.likedByMe = likedByMe;
-    this.commentCount = poll.commentCount ?? poll.comments.length ?? 0;
+    this.commentCount = poll.commentCount ?? poll.comments?.length ?? 0;
     this.bookmarkedByMe = bookmarkedByMe;
   }
 }

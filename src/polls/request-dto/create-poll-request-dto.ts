@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayMinSize, IsArray, IsNotEmpty, IsString } from 'class-validator';
 
-export class CreatePollDto {
+export class CreatePollRequestDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
