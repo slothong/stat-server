@@ -7,6 +7,8 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PollsModule } from './polls/polls.module';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -27,6 +29,9 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
         retryDelay: 3000,
         namingStrategy: new SnakeNamingStrategy(),
       }),
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
     }),
     AuthModule,
     UsersModule,

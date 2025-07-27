@@ -9,9 +9,13 @@ export class CommentAuthorDto {
   @ApiProperty()
   username: string;
 
+  @ApiProperty()
+  avatarUrl?: string;
+
   constructor(user: User) {
     this.userId = user.id;
     this.username = user.username;
+    this.avatarUrl = user.avatarUrl;
   }
 }
 

@@ -68,7 +68,7 @@ export class UserController {
     if (!req.user) throw new UnauthorizedException();
     const user = await this.usersService.findByUsername(req.user.username);
     if (!user) throw new UnauthorizedException();
-    const avatarUrl = file && `/uploads/avatars/${file.filename}`;
+    const avatarUrl = file && `/avatars/${file.filename}`;
     await this.usersService.updateUser(user.id, avatarUrl, updateMeDto.about);
   }
 

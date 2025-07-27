@@ -19,9 +19,13 @@ export class PollCreatedByDto {
   @ApiProperty()
   username: string;
 
+  @ApiProperty()
+  avatarUrl?: string;
+
   constructor(user: User) {
     this.id = user.id;
     this.username = user.username;
+    this.avatarUrl = user.avatarUrl;
   }
 }
 
