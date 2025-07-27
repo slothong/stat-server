@@ -29,10 +29,6 @@ export class UsersService {
     return this.userRepository.save(user);
   }
 
-  async findByUsername(username: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { username } });
-  }
-
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email } });
   }
@@ -41,14 +37,22 @@ export class UsersService {
     return bcrypt.compare(password, user.password);
   }
 
-  async updateUser(userId: string, avatarUrl?: string, about?: string) {
+  async updateUser(
+    userId: string,
+    userData: {
+      avatarUrl?: string;
+      about?: string;
+      username: string;
+    },
+  ) {
     await this.userRepository.update(
       {
         id: userId,
       },
       {
-        avatarUrl,
-        about,
+        avatarUrl: userData.avatarUrl,
+        about: userData.about,
+        username: userData.username,
       },
     );
   }

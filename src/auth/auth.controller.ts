@@ -23,7 +23,7 @@ export class AuthController {
   @Post('register')
   async register(@Body() dto: RegisterDto) {
     const { email, username, password, birth, gender } = dto;
-    const existing = await this.usersService.findByUsername(username);
+    const existing = await this.usersService.findByEmail(email);
     if (existing) {
       throw new BadRequestException('Username already exists');
     }

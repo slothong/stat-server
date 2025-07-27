@@ -39,7 +39,7 @@ export class UserController {
   @Get('me')
   async getMe(@Request() req: AuthRequest): Promise<UserResponseDto> {
     if (!req.user) throw new UnauthorizedException();
-    const user = await this.usersService.findByUsername(req.user.username);
+    const user = await this.usersService.findByEmail(req.user.email);
     if (!user) {
       throw new UnauthorizedException();
     }
@@ -62,14 +62,18 @@ export class UserController {
   @HttpCode(204)
   async updateMe(
     @Request() req: AuthRequest,
-    @Body() updateMeDto: { about?: string },
+    @Body() updateMeDto: { about?: string; username: string },
     @UploadedFile() file?: Express.Multer.File,
   ) {
     if (!req.user) throw new UnauthorizedException();
-    const user = await this.usersService.findByUsername(req.user.username);
+    const user = await this.usersService.findByEmail(req.user.email);
     if (!user) throw new UnauthorizedException();
     const avatarUrl = file && `/avatars/${file.filename}`;
-    await this.usersService.updateUser(user.id, avatarUrl, updateMeDto.about);
+    await this.usersService.updateUser(user.id, {
+      avatarUrl,
+      about: updateMeDto.about,
+      username: updateMeDto.username,
+    });
   }
 
   @ApiResponse({ status: 200, type: [PollResponseDto] })

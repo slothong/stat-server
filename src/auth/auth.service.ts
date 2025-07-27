@@ -11,7 +11,7 @@ export class AuthService {
   ) {}
 
   login(user: User) {
-    const payload = { username: user.username, sub: user.id };
+    const payload = { email: user.email, sub: user.id };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: '15m',
     });
@@ -27,12 +27,12 @@ export class AuthService {
   async refresh(refreshToken: string) {
     const payload = await this.jwtService.verifyAsync(refreshToken);
 
-    const user = await this.usersService.findByUsername(payload.username);
+    const user = await this.usersService.findByEmail(payload.email);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
     }
 
-    const newPayload = { username: user.username, sub: user.id };
+    const newPayload = { email: user.email, sub: user.id };
 
     const newAccessToken = this.jwtService.sign(newPayload, {
       expiresIn: '15m',

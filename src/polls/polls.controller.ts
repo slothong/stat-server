@@ -136,8 +136,8 @@ export class PollsController {
     @Param('id') pollId: string,
   ): Promise<CommentResponseDto[]> {
     const userId = req.user?.userId;
-    const username = req.user?.username;
-    if (userId == null || username == null) throw new UnauthorizedException();
+    const email = req.user?.email;
+    if (userId == null || email == null) throw new UnauthorizedException();
     const comments = await this.commentService.getComments(pollId);
     return comments
       .map((comment) => new CommentResponseDto(comment))
@@ -154,8 +154,8 @@ export class PollsController {
     @Body() createCommentDto: CreateCommentRequestDto,
   ): Promise<CommentResponseDto> {
     const userId = req.user?.userId;
-    const username = req.user?.username;
-    if (userId == null || username == null) throw new UnauthorizedException();
+    const email = req.user?.email;
+    if (userId == null || email == null) throw new UnauthorizedException();
     const { content } = createCommentDto;
     const comment = await this.commentService.createComment(
       pollId,
