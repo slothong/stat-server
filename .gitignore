@@ -59,3 +59,5 @@ statkey.pem
 
 localhost-key.pem
 localhost.pem
+
+uploads/avatars/*

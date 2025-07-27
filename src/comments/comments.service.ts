@@ -19,6 +19,15 @@ export class CommentService {
     return comments;
   }
 
+  async getCommentsByUser(userId: string): Promise<Comment[]> {
+    return await this.commentRepository.find({
+      where: {
+        authorId: userId,
+      },
+      relations: ['author', 'poll'],
+    });
+  }
+
   async createComment(
     pollId: string,
     userId: string,

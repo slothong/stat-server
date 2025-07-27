@@ -40,4 +40,16 @@ export class UsersService {
   async validatePassword(user: User, password: string): Promise<boolean> {
     return bcrypt.compare(password, user.password);
   }
+
+  async updateUser(userId: string, avatarUrl?: string, about?: string) {
+    await this.userRepository.update(
+      {
+        id: userId,
+      },
+      {
+        avatarUrl,
+        about,
+      },
+    );
+  }
 }

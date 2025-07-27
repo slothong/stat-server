@@ -8,7 +8,6 @@ import {
   Request,
   UnauthorizedException,
   Delete,
-  Query,
   BadRequestException,
 } from '@nestjs/common';
 import { PollService } from './polls.service';
@@ -35,22 +34,11 @@ export class PollsController {
   @UseGuards(OptionalJwtAuthGuard)
   @ApiResponse({ status: 200, type: [PollResponseDto] })
   @Get()
-  async findAll(
-    @Request() req: AuthRequest,
-    @Query('userId') queryUserId: string,
-  ): Promise<PollResponseDto[]> {
+  async findAll(@Request() req: AuthRequest): Promise<PollResponseDto[]> {
+    const userId = req.user?.userId;
     const polls = (await this.pollService.findAll()).sort(
       (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
     );
-
-    if (queryUserId) {
-      const myPolls = polls.filter((poll) => poll.createdBy.id === queryUserId);
-      if (queryUserId === req.user?.userId) {
-        return myPolls.map((poll) => new PollResponseDto(poll, queryUserId));
-      }
-      return myPolls.map((poll) => new PollResponseDto(poll));
-    }
-    const userId = req.user?.userId;
     return polls.map((poll) => new PollResponseDto(poll, userId));
   }
 
