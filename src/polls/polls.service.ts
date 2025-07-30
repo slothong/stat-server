@@ -9,6 +9,7 @@ import { Poll } from './poll.entity';
 import { CreatePollRequestDto } from './request-dto/create-poll-request-dto';
 import { Option } from '@/polls/option.entity';
 import { User } from '@/users/user.entity';
+import { add } from 'date-fns';
 
 @Injectable()
 export class PollService {
@@ -34,6 +35,72 @@ export class PollService {
       .loadRelationCountAndMap('poll.commentCount', 'poll.comments') // 댓글 수만 추가
       .getMany();
     return polls;
+  }
+
+  async findMany({
+    limit,
+    after,
+    sort,
+  }: {
+    limit: number;
+    after?: string;
+    sort?: string;
+  }): Promise<{ data: Poll[]; nextCursor?: string }> {
+    const baseQuery = this.pollRepository.createQueryBuilder('poll');
+
+    const likeCountSubQuery = this.pollRepository
+      .createQueryBuilder('poll')
+      .leftJoin('poll.likedBy', 'user')
+      .select('poll.id', 'pollId')
+      .addSelect('COUNT(user.id)', 'likeCount')
+      .groupBy('poll.id');
+
+    const query =
+      sort === 'hot'
+        ? baseQuery
+            .leftJoin(
+              `(${likeCountSubQuery.getQuery()})`,
+              'likes',
+              'likes."pollId" = poll.id',
+            )
+            .addSelect('likes."likeCount"')
+            .setParameters(likeCountSubQuery.getParameters())
+        : baseQuery
+            .orderBy('poll.createdAt', 'DESC')
+            .addOrderBy('poll.id', 'DESC'); // 같은 시간일 경우 중복 방지
+
+    if (after) {
+      // 커서를 createdAt|id 문자열 형태로 가정: "2024-07-27T12:00:00.000Z|abc"
+      const [createdAtStr, id] = after.split('|');
+      const createdAt = new Date(createdAtStr);
+
+      query.where(
+        '(poll.createdAt < :createdAt OR (poll.createdAt = :createdAt AND poll.id < :id))',
+        { createdAt, id },
+      );
+    }
+
+    const polls = await query
+      .leftJoinAndSelect('poll.options', 'option')
+      .leftJoinAndSelect('poll.votes', 'vote')
+      .leftJoinAndSelect('poll.createdBy', 'createdBy')
+      .leftJoinAndSelect('vote.user', 'voteUser')
+      .leftJoinAndSelect('vote.option', 'voteOption')
+      .leftJoinAndSelect('poll.likedBy', 'likedBy')
+      .leftJoinAndSelect('poll.bookmarkedBy', 'bookmarkedBy')
+      .loadRelationCountAndMap('poll.commentCount', 'poll.comments')
+      .take(limit)
+      .getMany();
+
+    const nextCursor =
+      polls.length === limit
+        ? `${polls[polls.length - 1].createdAt.toISOString()}|${polls[polls.length - 1].id}`
+        : undefined;
+
+    return {
+      data: polls,
+      nextCursor,
+    };
   }
 
   async findOne(pollId: string): Promise<Poll> {
@@ -114,10 +181,12 @@ export class PollService {
     if (!user) {
       throw new UnauthorizedException();
     }
+
     const poll = await this.pollRepository.save(
       this.pollRepository.create({
         question: data.question,
         description: data.description,
+        expiresAt: this.calculateExpiresAt(data.duration),
         createdBy: user,
       }),
     );
@@ -215,5 +284,26 @@ export class PollService {
     );
 
     return this.pollRepository.save(poll);
+  }
+
+  private calculateExpiresAt(duration: string): Date {
+    const now = new Date();
+    const match = duration.match(/^(\d+)([dhw])$/); // day/hour/week 등 지원
+
+    if (!match) throw new Error('Invalid duration format');
+
+    const [_, amountStr, unit] = match;
+    const amount = parseInt(amountStr, 10);
+
+    switch (unit) {
+      case 'd':
+        return add(now, { days: amount });
+      case 'h':
+        return add(now, { hours: amount });
+      case 'w':
+        return add(now, { weeks: amount });
+      default:
+        throw new Error('Unsupported duration unit');
+    }
   }
 }

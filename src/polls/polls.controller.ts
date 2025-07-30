@@ -9,6 +9,7 @@ import {
   UnauthorizedException,
   Delete,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { PollService } from './polls.service';
 import { CreatePollRequestDto } from './request-dto/create-poll-request-dto';
@@ -22,6 +23,7 @@ import { CommentResponseDto } from './response-dto/comment-response-dto';
 import { CommentService } from '@/comments/comments.service';
 import { CreateCommentRequestDto } from './request-dto/create-comment-request-dto';
 import { VoteRequestDto } from './request-dto/vote-request.dto';
+import { PollListResponseDto } from './response-dto/poll-list-response-dto';
 
 @Controller('polls')
 export class PollsController {
@@ -34,12 +36,22 @@ export class PollsController {
   @UseGuards(OptionalJwtAuthGuard)
   @ApiResponse({ status: 200, type: [PollResponseDto] })
   @Get()
-  async findAll(@Request() req: AuthRequest): Promise<PollResponseDto[]> {
+  async findMany(
+    @Request() req: AuthRequest,
+    @Query('after') after?: string,
+    @Query('limit') limit?: number,
+    @Query('sort') sort?: string,
+  ): Promise<PollListResponseDto> {
     const userId = req.user?.userId;
-    const polls = (await this.pollService.findAll()).sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
-    );
-    return polls.map((poll) => new PollResponseDto(poll, userId));
+    const polls = await this.pollService.findMany({
+      limit: limit ?? 10,
+      after,
+      sort,
+    });
+    return {
+      data: polls.data.map((poll) => new PollResponseDto(poll, userId)),
+      nextCursor: polls.nextCursor,
+    };
   }
 
   @ApiResponse({ status: 200, type: PollResponseDto })

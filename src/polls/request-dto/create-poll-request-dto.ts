@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMinSize, IsArray, IsNotEmpty, IsString } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsDate,
+  IsNotEmpty,
+  IsString,
+} from 'class-validator';
 
 export class CreatePollRequestDto {
   @ApiProperty()
@@ -16,4 +22,8 @@ export class CreatePollRequestDto {
   @ArrayMinSize(2)
   @IsString({ each: true })
   options: string[];
+
+  @ApiProperty()
+  @IsString()
+  duration: '1h' | '1d' | '3d';
 }

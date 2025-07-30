@@ -23,6 +23,9 @@ export class Poll {
   @Column('text')
   description: string;
 
+  @Column()
+  expiresAt: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -43,6 +43,9 @@ export class PollResponseDto {
   createdAt: Date;
 
   @ApiProperty()
+  expiresAt: Date;
+
+  @ApiProperty()
   createdBy: PollCreatedByDto;
 
   @ApiProperty({ type: [OptionResponseDto] })
@@ -80,6 +83,7 @@ export class PollResponseDto {
     this.id = poll.id;
     this.question = poll.question;
     this.description = poll.description;
+    this.expiresAt = poll.expiresAt;
     this.createdAt = poll.createdAt;
     this.createdBy = new PollCreatedByDto(poll.createdBy);
     this.options = poll.options.map((option) => ({
