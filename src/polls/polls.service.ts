@@ -46,8 +46,6 @@ export class PollService {
     after?: string;
     sort?: string;
   }): Promise<{ data: Poll[]; nextCursor?: string }> {
-    const baseQuery = this.pollRepository.createQueryBuilder('poll');
-
     const likeCountSubQuery = this.pollRepository
       .createQueryBuilder('poll')
       .leftJoin('poll.likedBy', 'user')
@@ -55,16 +53,19 @@ export class PollService {
       .addSelect('COUNT(user.id)', 'likeCount')
       .groupBy('poll.id');
 
+    const baseQuery = this.pollRepository
+      .createQueryBuilder('poll')
+      .leftJoin(
+        `(${likeCountSubQuery.getQuery()})`,
+        'likes',
+        'likes."pollId" = poll.id',
+      )
+      .addSelect('likes."likeCount"', 'like_count')
+      .setParameters(likeCountSubQuery.getParameters());
+
     const query =
       sort === 'hot'
-        ? baseQuery
-            .leftJoin(
-              `(${likeCountSubQuery.getQuery()})`,
-              'likes',
-              'likes."pollId" = poll.id',
-            )
-            .addSelect('likes."likeCount"')
-            .setParameters(likeCountSubQuery.getParameters())
+        ? baseQuery.orderBy('like_count', 'DESC').addOrderBy('poll.id', 'DESC')
         : baseQuery
             .orderBy('poll.createdAt', 'DESC')
             .addOrderBy('poll.id', 'DESC'); // 같은 시간일 경우 중복 방지
