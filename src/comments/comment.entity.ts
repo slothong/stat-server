@@ -9,6 +9,7 @@ import {
   DeleteDateColumn,
   ManyToOne,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
 
 @Entity('comments')
@@ -35,10 +36,11 @@ export class Comment {
     nullable: true,
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'parentId' })
   parent: Comment;
 
-  @Column({ nullable: true })
-  parentId: string;
+  @Column({ nullable: true, name: 'parent_id' })
+  parentId?: string;
 
   @OneToMany(() => Comment, (comment) => comment.parent)
   replies: Comment[];

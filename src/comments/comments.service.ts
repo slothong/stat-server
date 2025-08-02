@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { Comment } from './comment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -28,15 +32,32 @@ export class CommentService {
     });
   }
 
-  async createComment(
-    pollId: string,
-    userId: string,
-    content: string,
-  ): Promise<Comment> {
+  async createComment({
+    parentId,
+    pollId,
+    userId,
+    content,
+  }: {
+    parentId?: string;
+    pollId: string;
+    userId: string;
+    content: string;
+  }): Promise<Comment> {
     const comment = this.commentRepository.create();
     comment.pollId = pollId;
     comment.authorId = userId;
     comment.content = content;
+
+    if (parentId) {
+      const parent = await this.commentRepository.findOne({
+        where: {
+          id: parentId,
+        },
+      });
+      if (parent == null)
+        throw new BadRequestException(`Invalid parent comment ID: ${parentId}`);
+      comment.parent = parent;
+    }
 
     const savedComment = await this.commentRepository.save(comment);
 

@@ -41,10 +41,12 @@ export class PollService {
     limit,
     after,
     sort,
+    status,
   }: {
     limit: number;
     after?: string;
     sort?: string;
+    status?: string;
   }): Promise<{ data: Poll[]; nextCursor?: string }> {
     const likeCountSubQuery = this.pollRepository
       .createQueryBuilder('poll')
@@ -53,7 +55,7 @@ export class PollService {
       .addSelect('COUNT(user.id)', 'likeCount')
       .groupBy('poll.id');
 
-    const baseQuery = this.pollRepository
+    const query = this.pollRepository
       .createQueryBuilder('poll')
       .leftJoin(
         `(${likeCountSubQuery.getQuery()})`,
@@ -63,12 +65,11 @@ export class PollService {
       .addSelect('likes."likeCount"', 'like_count')
       .setParameters(likeCountSubQuery.getParameters());
 
-    const query =
-      sort === 'hot'
-        ? baseQuery.orderBy('like_count', 'DESC').addOrderBy('poll.id', 'DESC')
-        : baseQuery
-            .orderBy('poll.createdAt', 'DESC')
-            .addOrderBy('poll.id', 'DESC'); // 같은 시간일 경우 중복 방지
+    if (sort === 'hot') {
+      query.orderBy('like_count', 'DESC').addOrderBy('poll.id', 'DESC');
+    } else {
+      query.orderBy('poll.createdAt', 'DESC').addOrderBy('poll.id', 'DESC'); // 같은 시간일 경우 중복 방지
+    }
 
     if (after) {
       // 커서를 createdAt|id 문자열 형태로 가정: "2024-07-27T12:00:00.000Z|abc"
@@ -79,6 +80,10 @@ export class PollService {
         '(poll.createdAt < :createdAt OR (poll.createdAt = :createdAt AND poll.id < :id))',
         { createdAt, id },
       );
+    }
+
+    if (status === 'expired') {
+      query.where('poll.expiresAt < :now', { now: new Date() });
     }
 
     const polls = await query

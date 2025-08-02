@@ -41,12 +41,14 @@ export class PollsController {
     @Query('after') after?: string,
     @Query('limit') limit?: number,
     @Query('sort') sort?: string,
+    @Query('status') status?: string,
   ): Promise<PollListResponseDto> {
     const userId = req.user?.userId;
     const polls = await this.pollService.findMany({
       limit: limit ?? 10,
       after,
       sort,
+      status,
     });
     return {
       data: polls.data.map((poll) => new PollResponseDto(poll, userId)),
@@ -168,12 +170,13 @@ export class PollsController {
     const userId = req.user?.userId;
     const email = req.user?.email;
     if (userId == null || email == null) throw new UnauthorizedException();
-    const { content } = createCommentDto;
-    const comment = await this.commentService.createComment(
+    const { content, parentId } = createCommentDto;
+    const comment = await this.commentService.createComment({
+      parentId,
       pollId,
       userId,
       content,
-    );
+    });
     return new CommentResponseDto(comment);
   }
 
