@@ -38,13 +38,25 @@ export class CommentResponseDto {
   @ApiProperty()
   replies: CommentResponseDto[];
 
-  constructor(comment: Comment) {
+  @ApiProperty()
+  likedByMe?: boolean;
+
+  @ApiProperty()
+  likedByCount: number;
+
+  constructor(comment: Comment, userId?: string) {
     this.id = comment.id;
     this.content = comment.content;
     this.author = new CommentAuthorDto(comment.author);
     this.createdAt = comment.createdAt;
     this.updatedAt = comment.updatedAt;
     this.replies =
-      comment.replies?.map((comment) => new CommentResponseDto(comment)) ?? [];
+      comment.replies?.map(
+        (comment) => new CommentResponseDto(comment, userId),
+      ) ?? [];
+    this.likedByMe = userId
+      ? comment.likedBy?.some((user) => user.id === userId)
+      : undefined;
+    this.likedByCount = comment.likedBy?.length ?? 0;
   }
 }

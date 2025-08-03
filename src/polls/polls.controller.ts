@@ -20,7 +20,7 @@ import { AuthRequest } from '@/auth/auth-request';
 import { VoteService } from '@/votes/votes.service';
 import { OptionalJwtAuthGuard } from '@/auth/optional-auth-guard';
 import { CommentResponseDto } from './response-dto/comment-response-dto';
-import { CommentService } from '@/comments/comments.service';
+import { CommentService } from '@/comments/comment.service';
 import { CreateCommentRequestDto } from './request-dto/create-comment-request-dto';
 import { VoteRequestDto } from './request-dto/vote-request.dto';
 import { PollListResponseDto } from './response-dto/poll-list-response-dto';
@@ -153,7 +153,7 @@ export class PollsController {
     const email = req.user?.email;
     if (userId == null || email == null) throw new UnauthorizedException();
     const comments = await this.commentService.getComments(pollId);
-    return comments.map((comment) => new CommentResponseDto(comment));
+    return comments.map((comment) => new CommentResponseDto(comment, userId));
   }
 
   @ApiBody({ type: CreateCommentRequestDto })
@@ -175,7 +175,7 @@ export class PollsController {
       userId,
       content,
     });
-    return new CommentResponseDto(comment);
+    return new CommentResponseDto(comment, userId);
   }
 
   @ApiBody({ type: [VoteRequestDto] })

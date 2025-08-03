@@ -10,6 +10,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  ManyToMany,
 } from 'typeorm';
 
 @Entity('comments')
@@ -44,6 +45,9 @@ export class Comment {
 
   @OneToMany(() => Comment, (comment) => comment.parent)
   replies: Comment[];
+
+  @ManyToMany(() => User, (user) => user.likedComments)
+  likedBy: User[];
 
   @CreateDateColumn()
   createdAt: Date;

@@ -20,7 +20,7 @@ import { PollService } from '@/polls/polls.service';
 import { PollResponseDto } from '@/polls/response-dto/poll-response-dto';
 import { OptionalJwtAuthGuard } from '@/auth/optional-auth-guard';
 import { CommentResponseDto } from '@/polls/response-dto/comment-response-dto';
-import { CommentService } from '@/comments/comments.service';
+import { CommentService } from '@/comments/comment.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -118,6 +118,6 @@ export class UserController {
   @Get(':id/comments')
   async getCommentsByUser(@Param('id') userId: string) {
     const comments = await this.commentSerivce.getCommentsByUser(userId);
-    return comments.map((comment) => new CommentResponseDto(comment));
+    return comments.map((comment) => new CommentResponseDto(comment, userId));
   }
 }

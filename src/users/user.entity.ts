@@ -48,6 +48,10 @@ export class User {
   @JoinTable()
   likedPolls: Poll[];
 
+  @ManyToMany(() => Comment, (comment) => comment.likedBy)
+  @JoinTable()
+  likedComments: Comment[];
+
   @ManyToMany(() => Poll, (poll) => poll.bookmarkedBy)
   @JoinTable()
   bookmarkedPolls: Poll[];
