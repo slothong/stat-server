@@ -35,11 +35,16 @@ export class CommentResponseDto {
   @ApiProperty()
   updatedAt: Date;
 
+  @ApiProperty()
+  replies: CommentResponseDto[];
+
   constructor(comment: Comment) {
     this.id = comment.id;
     this.content = comment.content;
     this.author = new CommentAuthorDto(comment.author);
     this.createdAt = comment.createdAt;
     this.updatedAt = comment.updatedAt;
+    this.replies =
+      comment.replies?.map((comment) => new CommentResponseDto(comment)) ?? [];
   }
 }

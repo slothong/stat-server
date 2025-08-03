@@ -36,10 +36,10 @@ export class Comment {
     nullable: true,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'parentId' })
+  @JoinColumn({ name: 'parent_id' })
   parent: Comment;
 
-  @Column({ nullable: true, name: 'parent_id' })
+  @Column({ nullable: true, name: 'parent_id', type: 'uuid' })
   parentId?: string;
 
   @OneToMany(() => Comment, (comment) => comment.parent)

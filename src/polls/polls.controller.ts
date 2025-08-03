@@ -153,9 +153,7 @@ export class PollsController {
     const email = req.user?.email;
     if (userId == null || email == null) throw new UnauthorizedException();
     const comments = await this.commentService.getComments(pollId);
-    return comments
-      .map((comment) => new CommentResponseDto(comment))
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return comments.map((comment) => new CommentResponseDto(comment));
   }
 
   @ApiBody({ type: CreateCommentRequestDto })

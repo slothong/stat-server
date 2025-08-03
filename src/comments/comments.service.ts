@@ -14,12 +14,17 @@ export class CommentService {
     private readonly commentRepository: Repository<Comment>,
   ) {}
   async getComments(pollId: string): Promise<Comment[]> {
-    const comments = await this.commentRepository.find({
-      where: {
-        pollId,
-      },
-      relations: ['author', 'poll'],
-    });
+    const comments = await this.commentRepository
+      .createQueryBuilder('comment')
+      .leftJoinAndSelect('comment.author', 'author')
+      .leftJoinAndSelect('comment.poll', 'poll')
+      .leftJoinAndSelect('comment.replies', 'reply')
+      .leftJoinAndSelect('reply.author', 'replyAuthor')
+      .where('comment.pollId = :pollId', { pollId })
+      .andWhere('comment.parent_id IS NULL')
+      .orderBy('comment.createdAt', 'DESC')
+      .addOrderBy('reply.createdAt', 'DESC')
+      .getMany();
     return comments;
   }
 
